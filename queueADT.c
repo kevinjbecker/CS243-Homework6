@@ -7,7 +7,6 @@
 ///
 // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
-#define _DEFAULT_SOURCE
 #include <stdio.h> //
 #include <stdlib.h>// malloc/free
 
@@ -105,7 +104,6 @@ void que_insert( QueueADT queue, void * data )
     // (no comparison needed)
     if(queue->size == 0)
     {
-        printf("inserting first node\n");
         // sets both the first and last element to new node
         queue->first = newNode;
         queue->last = newNode;
