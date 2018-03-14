@@ -56,13 +56,40 @@ QueueADT que_create( int (*cmp)(const void*a,const void*b) )
 
 void que_destroy( QueueADT queue )
 {
-    
+    // why implement the same thing twice?
+    que_clear(queue);
+
+    // frees our queue (only difference for destroy function)
+    free(queue);
+    // sets queue to NULL
+    queue = NULL;
 }
 
 
-void que_clear( QueueADT queue )
-{
-    
+void que_clear( QueueADT queue ) {
+    // we only want to do this if we have an actual queue and its size is > 0
+    if (queue != NULL && queue->size > 0)
+    {
+        // declares two nodes: one with definite data, and one which may be NULL
+        QNode *curNode = queue->first, *nextNode = curNode->next;
+
+        // goes until we hit the last node
+        while (nextNode != NULL)
+        {
+            // frees our current node
+            free(curNode);
+            //
+            curNode = nextNode;
+            nextNode = nextNode->next;
+        }
+
+        // clears the last node
+        free(curNode);
+        curNode = NULL;
+
+        // last thing we do is set our queue's size to 0
+        queue->size = 0;
+    }
 }
 
 
@@ -78,8 +105,10 @@ void que_insert( QueueADT queue, void * data )
     // (no comparison needed)
     if(queue->size == 0)
     {
+        printf("inserting first node\n");
         // sets both the first and last element to new node
-        queue->first = queue->last = newNode;
+        queue->first = newNode;
+        queue->last = newNode;
     }
     // if we weren't given a comparison function, FIFO style
     else if(queue->cmp != NULL)
