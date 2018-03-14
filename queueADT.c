@@ -7,8 +7,9 @@
 ///
 // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
-#include <stdio.h> // print (idk if needed)
-#include <string.h>
+#define _DEFAULT_SOURCE
+#include <stdio.h> //
+#include <stdlib.h>// malloc/free
 
 // the nodes that go into our queue structure defined below
 typedef struct qnode_s{
@@ -35,10 +36,11 @@ typedef struct queue_s{
 
 QueueADT que_create( int (*cmp)(const void*a,const void*b) )
 {
+
     // pointer to a new queue (set to NULL for now)
     QueueADT queue = NULL;
     // allocates enough space for our queue
-    queue = malloc(sizeof(queue_s));
+    queue = malloc(sizeof(struct queue_s));
     // sets our first and last nodes to null
     queue->first = NULL;
     queue->last = NULL;
@@ -66,7 +68,7 @@ void que_clear( QueueADT queue )
 
 void que_insert( QueueADT queue, void * data )
 {
-    // creats a new node
+    // creates a new node
     QNode *newNode = NULL;
     newNode = malloc(sizeof(QNode));
     newNode->data = data;
@@ -78,34 +80,40 @@ void que_insert( QueueADT queue, void * data )
     {
         // sets both the first and last element to new node
         queue->first = queue->last = newNode;
-        // we can immediately return here we are done
-        return;
     }
     // if we weren't given a comparison function, FIFO style
-    else if(queue->cmp == NULL)
+    else if(queue->cmp != NULL)
+    {
+        // the usefulness of the double pointer here is so we can effectively
+        // insert our node into the middle of the queue if needbe
+        // start from the first node and go back
+        QNode **cmpNode = &queue->first;
+        // keeps going until we find a spot to put our new item in
+        // while: node not null, and we are still greater than selected element
+        while(*cmpNode != NULL && queue->cmp(data, (*cmpNode)->data) > 0)
+            // set our compare node to be the next node of compare node
+            cmpNode = &(*cmpNode)->next;
+
+        // we've escaped our loop, we found where we should input newNode
+        // if node is NULL, we've hit the end of our queue; simple append
+        if(*cmpNode == NULL)
+            queue->last = newNode;
+            // if it ISN'T NULL, we need to insert ourselves in the middle of queue
+        else
+            // the next node for newNode is the pointer to cmpNode we compare
+            // greater than
+            newNode->next = (*cmpNode);
+
+        // insert ourself into the queue
+        (*cmpNode) = newNode;
+    }
+    // if we HAVE a comparison function, we use that for insertion
+    else
     {
         // last node's next member is set to our new node
         queue->last->next = newNode;
         // so is the last element of queue set to our new node
         queue->last = newNode;
-    }
-    // if we HAVE a comparison function, we use that for insertion
-    else
-    {
-        // start from the first node and go back
-        QNode **n = &queue->first;
-        // keeps goint unil we find a spot to put our new item in
-        // while: n is not null, and we are still greater than selected element
-        while(*n != NULL && queue->cmp((*n)->data, data) > 0)
-            // sets our n to the next node based upon 
-            n = &(*n)->next;
-
-        // we've escaped our loop, we found where we should input newNode
-        // if *n is NULL, we've hit the end of our queue
-        if(*n == NULL)
-            queue->last = newNode;
-        else
-            
     }
 
     // adds one to the size of the queue (we just added one in)
