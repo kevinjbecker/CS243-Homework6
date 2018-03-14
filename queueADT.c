@@ -8,9 +8,10 @@
 // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
 #include <stdio.h> //
-#include <stdlib.h>// malloc/free
+#include <stdlib.h> // malloc, free
+#include <stdbool.h> // boolean data members
 
-// the nodes that go into our queue structure defined below
+// a QNode is a structure which contains the data being input into a queue
 typedef struct qnode_s{
     // the data of our node
     void *data;
@@ -27,12 +28,16 @@ typedef struct queue_s{
     // the size of our queue
     int size;
     // the comparison function used to insert nodes
-    int (*cmp)(const void*a, const void*b);
+    int (*cmp)(const void*, const void*);
 } * QueueADT;
 
+// this define is so our above definition doesn't get overwritten
 #define _QUEUE_IMPL_
+// includes our header file which defines what functions we need to provide
 #include "queueADT.h"
 
+
+/// creates an empty queue with comparison function pointer passed as argument
 QueueADT que_create( int (*cmp)(const void*a,const void*b) )
 {
 
@@ -53,23 +58,12 @@ QueueADT que_create( int (*cmp)(const void*a,const void*b) )
 }
 
 
-void que_destroy( QueueADT queue )
-{
-    // why implement the same thing twice?
-    que_clear(queue);
-
-    // frees our queue (only difference for destroy function)
-    free(queue);
-    // sets queue to NULL
-    queue = NULL;
-}
-
-
+/// clears a queue of all data, freeing all blocks of allocated memory
 void que_clear( QueueADT queue ) {
     // we only want to do this if we have an actual queue and its size is > 0
     if (queue != NULL && queue->size > 0)
     {
-        // declares two nodes: one with definite data, and one which may be NULL
+        // declares two nodes: one definitely has data, the other might not
         QNode *curNode = queue->first, *nextNode = curNode->next;
 
         // goes until we hit the last node
@@ -82,7 +76,7 @@ void que_clear( QueueADT queue ) {
             nextNode = nextNode->next;
         }
 
-        // clears the last node
+        // clears the last node from heapspace
         free(curNode);
         curNode = NULL;
 
@@ -92,9 +86,24 @@ void que_clear( QueueADT queue ) {
 }
 
 
+/// destroys the queue by clearing all data and freeing the queue from memory
+void que_destroy( QueueADT queue )
+{
+    // clears all the data out of the queue
+    // why implement the same thing twice?
+    que_clear(queue);
+
+    // frees our queue (only difference for destroy function)
+    free(queue);
+    // sets queue to NULL
+    queue = NULL;
+}
+
+
+/// inserts any 64-bit data into the queue
 void que_insert( QueueADT queue, void * data )
 {
-    // creates a new node
+    // creates a new node with data of data
     QNode *newNode = NULL;
     newNode = malloc(sizeof(QNode));
     newNode->data = data;
@@ -144,10 +153,11 @@ void que_insert( QueueADT queue, void * data )
     }
 
     // adds one to the size of the queue (we just added one in)
-    queue->size += 1;
+    queue->size++;
 }
 
 
+/// removes the first element in our queue and frees the memory
 void * que_remove( QueueADT queue )
 {
     // ( last ) QNode -> QNode -> QNode -> QNode ( first )
@@ -159,7 +169,7 @@ void * que_remove( QueueADT queue )
     // changes our first node to be the second member
     queue->first = firstNode->next;
     // subtracts one from the size
-    queue->size -= 1;
+    queue->size--;
 
     // destroys our first node (we're done with it)
     free(firstNode);
@@ -169,7 +179,8 @@ void * que_remove( QueueADT queue )
 }
 
 
+/// returns if the queue is empty or not
 bool que_empty( QueueADT queue )
 {
-    return (queue->size == 0) ? true : false;
+   return (queue->size == 0) ? true : false;
 }
