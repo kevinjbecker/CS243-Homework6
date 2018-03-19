@@ -15,16 +15,16 @@
 typedef struct qnode_s{
     // the data of our node
     void *data;
-    // the node behind us (if we're first, this is the second node; can be NULL)
+    // the node behind us (if we're firstNode, this is the second node; can be NULL)
     struct qnode_s *behind;
 } QNode;
 
 // our Queue structure
 typedef struct queue_s{
     // the front of our queue (can be NULL if empty queue)
-    QNode *first;
+    QNode *firstNode;
     // the end of our queue (can be NULL if empty queue)
-    QNode *last;
+    QNode *lastNode;
     // the size of our queue
     int size;
     // the comparison function used to insert nodes
@@ -45,9 +45,9 @@ QueueADT que_create( int (*cmp)(const void*a,const void*b) )
     // allocates enough space for our queue
     queue = malloc(sizeof(struct queue_s));
 
-    // sets our first and last nodes to null
-    queue->first = NULL;
-    queue->last = NULL;
+    // sets our firstNode and lastNode nodes to null
+    queue->firstNode = NULL;
+    queue->lastNode = NULL;
     // current size is 0
     queue->size = 0;
     // sets our comparison function (which may be NULL) to the one passed in
@@ -63,9 +63,9 @@ void que_clear( QueueADT queue ) {
     // we only want to do this if we have an actual queue and it's not empty
     if (queue != NULL && !que_empty(queue))
     {
-        // when we get here we are guaranteed that there is a first node
+        // when we get here we are guaranteed that there is a firstNode node
         // declares two nodes: one definitely has data, the other might not
-        QNode *curNode = queue->first, *nextNode = curNode->behind;
+        QNode *curNode = queue->firstNode, *nextNode = curNode->behind;
 
         // keep freeing until our nextNode is NULL
         while (nextNode != NULL)
@@ -84,8 +84,11 @@ void que_clear( QueueADT queue ) {
         // sets our curNode to NULL (nextNode is already NULL)
         curNode = NULL;
 
-        // last thing we do is set our queue's size to 0; we're done
+        // last thing we do is set our queue's size to 0 and our first and last
+        // nodes to NULL, it's now empty
         queue->size = 0;
+        queue->firstNode = NULL;
+        queue->lastNode = NULL;
     }
 }
 
@@ -125,14 +128,17 @@ void que_insert( QueueADT queue, void * data )
     if(queue->size == 0)
     {
         // sets both the first and last element to new node
-        queue->first = newNode;
-        queue->last = newNode;
+        queue->firstNode = newNode;
+        queue->lastNode = newNode;
+
+        // checks to make sure we have the
+        assert(queue->lastNode == newNode);
     }
     // if we were given a comparison function, use it
     else if(queue->cmp != NULL)
     {
-        // start from the first node and go back
-        QNode **cmpNode = &queue->first;
+        // start from the firstNode node and go back
+        QNode **cmpNode = &queue->firstNode;
         // keeps going until we find a spot to put our new item in
         // while: node not null, and we are still greater than selected element
         // we insert once compare returns <= 0, or cmpNode is NULL
@@ -143,21 +149,26 @@ void que_insert( QueueADT queue, void * data )
         // we've now escaped our loop, we found where we should input newNode
         // if cmpNode is NULL, we've hit the end of our queue; simple append
         if(*cmpNode == NULL)
-            queue->last = newNode;
+            queue->lastNode = newNode;
         // if it ISN'T NULL, we need to insert ourselves in the middle of queue
         else
-            newNode->behind = (*cmpNode);
+            newNode->behind = *cmpNode;
 
         // we always need to set previous' new behind regardless
-        (*cmpNode) = newNode;
+        *cmpNode = newNode;
+
+        // checks to make sure we have properly put in the node
+        assert(*cmpNode == newNode);
     }
     // if we DON'T have a comparison function, we insert on the end
     else
     {
         // last node's next member is set to our new node
-        queue->last->behind = newNode;
-        // so is the last element of queue set to our new node
-        queue->last = newNode;
+        queue->lastNode->behind = newNode;
+        // lastNode of queue set to our new node
+        queue->lastNode = newNode;
+        // checks to make sure we have properly done this
+        assert(queue->lastNode == newNode);
     }
 
     // adds one to the size of the queue (we just added one in)
@@ -168,19 +179,28 @@ void que_insert( QueueADT queue, void * data )
 /// removes the first element in our queue and frees the memory
 void * que_remove( QueueADT queue )
 {
-    // ( last ) QNode -> QNode -> QNode -> QNode ( first )
-    // pulls in our first node
-    QNode *firstNode = queue->first;
+    // makes sure our queue isn't empty
+    assert(!que_empty(queue));
 
-    // copies the first node's data into temp var
+    // ( lastNode ) QNode -> QNode -> QNode -> QNode ( firstNode )
+    // pulls in our firstNode node
+    QNode *firstNode = queue->firstNode;
+
+    // copies the firstNode node's data into temp var
     void* toReturn = firstNode->data;
-    // changes our first node to be the second member
-    queue->first = firstNode->behind;
+    // changes our firstNode node to be the second member
+    queue->firstNode = firstNode->behind;
+
+    // if we're on our lastNode node (size will be 0 next, we need to get rid of the
+    // pointer to the node we are about to free
+    if (queue->size == 1)
+        queue->lastNode = NULL;
     // subtracts one from the size
     queue->size--;
 
-    // destroys our first node (we're done with it)
+    // destroys our firstNode node (we're done with it)
     free(firstNode);
+    firstNode = NULL;
 
     // returns the value we just removed
     return toReturn;
