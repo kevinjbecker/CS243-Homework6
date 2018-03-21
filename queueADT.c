@@ -96,6 +96,8 @@ void que_clear( QueueADT queue ) {
 /// destroys the queue by clearing all data and freeing the queue from memory
 void que_destroy( QueueADT queue )
 {
+    // makes sure we were given valid input
+    assert(queue != NULL);
     // clears all the data out of the queue
     // why implement the same thing twice?
     que_clear(queue);
@@ -114,6 +116,9 @@ void que_destroy( QueueADT queue )
 /// inserts any 64-bit data into the queue
 void que_insert( QueueADT queue, void * data )
 {
+    // just a quick sanity check before we try to do anything
+    assert(queue != NULL);
+
     // creates a new node with data of data
     QNode *newNode = NULL;
     // allocates enough space for our QNode on the heap
